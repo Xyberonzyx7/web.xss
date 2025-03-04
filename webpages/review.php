@@ -1,6 +1,17 @@
 <?php
 include 'db.php'; // Database connection
 
+// Set a cookie named 'user_review' with a value of 'positive' that expires in 7 days
+setcookie('username', 'David', time() + (7 * 24 * 60 * 60), "/");  // Expires in 7 days
+setcookie('password', '00000000', time() + (7 * 24 * 60 * 60), "/");  // Expires in 7 days
+
+// Check if the cookie was set successfully
+if (isset($_COOKIE['user_review'])) {
+    echo "Cookie value: " . $_COOKIE['user_review'];
+} else {
+    echo "Cookie has not been set yet.";
+}
+
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
 	// Vulnerable to Stored XSS
