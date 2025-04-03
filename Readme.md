@@ -47,8 +47,8 @@ Steps to setup the environment.
 - Put attack file in the following structure
 	```
 	xampp/htdocs/attacker/
-	│── log.txt				# stolen information (cookies)
-	└── style.css			# stealer code
+	│── log.txt			# stolen information (cookies)
+	└── steal.php			# stealer code
 	```
 
 - Run the attacker server using php
