@@ -85,7 +85,7 @@ header("Content-Type: text/html; charset=UTF-8");
                 output += `<div class='recommendation'>${item}</div>`;
             });
             
-            document.getElementById("recommendationList").innerHTML = output;
+            document.getElementById("recommendationList").textContent = output;
         }
     </script>
     
